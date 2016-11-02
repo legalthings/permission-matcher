@@ -21,7 +21,7 @@ The library can be installed using composer.
 The library exposes one function with which you can get a list of privileges for matching authz groups.
 Authz groups can be anything you want, in the example below resource URIs are used, but you could also use a string of any format.
 In the example we have a user that has certain permissions attached to him. We can then ask the `PermissionMatcher` class to extract the permissions of the users for a given authz group.
-Note that you can use wildcards `*`.
+Note that you can use wildcards `*`. You can also invert a permission by placing a `!` in front of the authz group.
 
 ```php
 $matcher = new PermissionMatcher();
@@ -45,5 +45,5 @@ echo $matcher->match($permissionsThatSomeUserHas, ['/organizations/0002?list=all
 // outputs ['list']
 
 echo $matcher->match($permissionsThatSomeUserHas, ['/organizations/*']);
-// outputs ['full-access', 'read', 'write', 'list']
+// outputs ['full-access', 'read', 'write']
 ```
