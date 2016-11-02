@@ -184,4 +184,16 @@ class PermissionMatcherTest extends \Codeception\TestCase\Test
         $this->assertArrayMatches(['write'], $this->matcher->match($permissions, ['/admin?RolE=support']));
         $this->assertArrayMatches(['party'], $this->matcher->match($permissions, ['/admin?joB=lawyer&FroM=amsterdam']));
     }
+    
+    public function testMatchInverted()
+    {
+        $permissions = [
+            '!admin' => 'read',
+            'admin' => ['read', 'write']
+        ];
+
+        $this->assertArrayMatches(['read', 'write'], $this->matcher->match($permissions, ['admin']));
+        $this->assertArrayMatches(['read'], $this->matcher->match($permissions, ['guest']));
+        $this->assertArrayMatches(['read'], $this->matcher->match($permissions, ['foo']));
+    }
 }

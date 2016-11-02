@@ -24,7 +24,6 @@ class PermissionMatcher
             }
         }
 
-        // exit();
         return $this->flatten($privileges);
     }
 
@@ -85,10 +84,13 @@ class PermissionMatcher
      */
     protected function matchAuthzGroupPaths($pattern, $subject)
     {
-        $regex = '^' . str_replace('[^/]+', '\\*', preg_quote($pattern, '~')) . '$'; // @todo: str_replace does not replace anything here?
+        $regex = '^' . str_replace('[^/]+', '\\*', preg_quote($pattern, '~')) . '$';
         $regex = str_replace('\\*', '(.*)', $regex);
 
-        return preg_match('~' . $regex . '~i', $subject);
+        $invert = $this->stringStartsWith($pattern, '!');
+        $match = preg_match('~' . $regex . '~i', $subject);
+
+        return $invert ? !$match : $match;
     }
 
 
@@ -142,5 +144,17 @@ class PermissionMatcher
         }
 
         return array_unique($list);
+    }
+    
+    /**
+     * Check if a string starts with given substring
+     *
+     * @param string $haystack
+     * @param string $needle
+     * @return boolean
+     */
+    protected function stringStartsWith($haystack, $needle)
+    {
+        return strpos($haystack, $needle) === 0 ? true : false;
     }
 }
