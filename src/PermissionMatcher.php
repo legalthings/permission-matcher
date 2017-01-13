@@ -12,33 +12,42 @@ class PermissionMatcher
      *
      * @param array|object $permissions
      * @param array        $authzGroups
+     * @param boolean      $reverse     Returns an array where the priviliges are the keys and authzgroups the values
      * @return array
      */
-    public function match($permissions, array $authzGroups)
+    public function match($permissions, array $authzGroups, $reverse = false)
     {
         $privileges = [];
 
         foreach ($permissions as $permissionAuthzGroup => $permissionPrivileges) {
-            if ($this->hasMatchingAuthzGroup($permissionAuthzGroup, $authzGroups)) {
+            $matchingAuthzGroup = $this->hasMatchingAuthzGroup($permissionAuthzGroup, $authzGroups);
+            
+            if (!$matchingAuthzGroup) {
+                continue;
+            }
+            
+            if ($reverse) {
+                $privileges = $this->addAuthzGroupsToPrivileges($privileges, $permissionPrivileges, [$permissionAuthzGroup, $matchingAuthzGroup]);
+            } else {
                 $privileges[] = $permissionPrivileges;
             }
         }
 
-        return $this->flatten($privileges);
+        return $reverse ? $privileges : $this->flatten($privileges);
     }
-
 
     /**
      * Check if one of the authz groups match
      *
      * @param string $permissionAuthzGroup
      * @param array  $authzGroups
+     * @return string|boolean
      */
     protected function hasMatchingAuthzGroup($permissionAuthzGroup, array $authzGroups)
     {
         foreach ($authzGroups as $authzGroup) {
             if ($this->authzGroupsAreEqual($permissionAuthzGroup, $authzGroup)) {
-                return true;
+                return $authzGroup;
             }
         }
 
@@ -144,6 +153,26 @@ class PermissionMatcher
         }
 
         return array_unique($list);
+    }
+    
+    /**
+     * Populate an array of privileges with their corresponding authz groups
+     *
+     * @param  array          $privileges            The resulting array
+     * @param  string|array   $authzGroupsPrivileges The privileges that the authzgroup has
+     * @param  array          $authzGroups
+     * @return array          $priviliges
+     */
+    protected function addAuthzGroupsToPrivileges(array $privileges, $authzGroupsPrivileges, array $authzGroups)
+    {
+        $authzGroupsPrivileges = !is_string($authzGroupsPrivileges) ? $authzGroupsPrivileges : [$authzGroupsPrivileges];
+        
+        foreach($authzGroupsPrivileges as $privilige) {
+            $privileges[$privilige] = !empty($privileges[$privilige]) ? $privileges[$privilige] : [];
+            $privileges[$privilige] = array_unique(array_merge($privileges[$privilige], $authzGroups));
+        }
+        
+        return $privileges;
     }
     
     /**
