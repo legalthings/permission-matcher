@@ -1,6 +1,7 @@
 {
     "name": "legalthings/permission-matcher",
     "description": "A permission matcher for PHP",
+    "version": "0.1",
     "license": "MIT",
     "require": {
         "php": ">=5.6.0",
