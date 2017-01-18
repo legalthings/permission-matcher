@@ -8,32 +8,54 @@ namespace LegalThings;
 class PermissionMatcher
 {
     /**
-     * Get a list of privileges for matching authz groups
+     * Get a flat list of privileges for matching authz groups
      *
      * @param array|object $permissions
      * @param array        $authzGroups
-     * @param boolean      $reverse     Returns an array where the priviliges are the keys and authzgroups the values
      * @return array
      */
-    public function match($permissions, array $authzGroups, $reverse = false)
+    public function match($permissions, array $authzGroups)
     {
         $privileges = [];
 
         foreach ($permissions as $permissionAuthzGroup => $permissionPrivileges) {
-            $matchingAuthzGroup = $this->hasMatchingAuthzGroup($permissionAuthzGroup, $authzGroups);
+            $matchingAuthzGroup = $this->getMatchingAuthzGroup($permissionAuthzGroup, $authzGroups);
             
             if (!$matchingAuthzGroup) {
                 continue;
             }
             
-            if ($reverse) {
-                $privileges = $this->addAuthzGroupsToPrivileges($privileges, $permissionPrivileges, [$permissionAuthzGroup, $matchingAuthzGroup]);
-            } else {
-                $privileges[] = $permissionPrivileges;
-            }
+            $privileges[] = $permissionPrivileges;
         }
 
-        return $reverse ? $privileges : $this->flatten($privileges);
+        return $this->flatten($privileges);
+    }
+    
+    /**
+     * Get a list of privileges for matching authz groups containing more information
+     * Returns an array of objects where the privilege is the key and authzgroups the value
+     *
+     * @param array|object $permissions
+     * @param array        $authzGroups
+     * @return array
+     */
+    public function matchFull($permissions, array $authzGroups)
+    {
+        $privileges = [];
+
+        foreach ($permissions as $permissionAuthzGroup => $permissionPrivileges) {
+            $matchingAuthzGroup = $this->getMatchingAuthzGroup($permissionAuthzGroup, $authzGroups);
+            
+            if (!$matchingAuthzGroup) {
+                continue;
+            }
+            
+            $privileges = $this->addAuthzGroupsToPrivileges($privileges, $permissionPrivileges, [
+                $permissionAuthzGroup, $matchingAuthzGroup
+            ]);
+        }
+
+        return $privileges;
     }
 
     /**
@@ -41,17 +63,15 @@ class PermissionMatcher
      *
      * @param string $permissionAuthzGroup
      * @param array  $authzGroups
-     * @return string|boolean
+     * @return string|null
      */
-    protected function hasMatchingAuthzGroup($permissionAuthzGroup, array $authzGroups)
+    protected function getMatchingAuthzGroup($permissionAuthzGroup, array $authzGroups)
     {
         foreach ($authzGroups as $authzGroup) {
             if ($this->authzGroupsAreEqual($permissionAuthzGroup, $authzGroup)) {
                 return $authzGroup;
             }
         }
-
-        return false;
     }
 
 
@@ -161,15 +181,15 @@ class PermissionMatcher
      * @param  array          $privileges            The resulting array
      * @param  string|array   $authzGroupsPrivileges The privileges that the authzgroup has
      * @param  array          $authzGroups
-     * @return array          $priviliges
+     * @return array          $privileges
      */
     protected function addAuthzGroupsToPrivileges(array $privileges, $authzGroupsPrivileges, array $authzGroups)
     {
         $authzGroupsPrivileges = !is_string($authzGroupsPrivileges) ? $authzGroupsPrivileges : [$authzGroupsPrivileges];
         
-        foreach($authzGroupsPrivileges as $privilige) {
-            $privileges[$privilige] = !empty($privileges[$privilige]) ? $privileges[$privilige] : [];
-            $privileges[$privilige] = array_unique(array_merge($privileges[$privilige], $authzGroups));
+        foreach($authzGroupsPrivileges as $privilege) {
+            $current = !empty($privileges[$privilege]) ? $privileges[$privilege] : [];
+            $privileges[$privilege] = array_unique(array_merge($current, $authzGroups));
         }
         
         return $privileges;
