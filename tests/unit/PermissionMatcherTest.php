@@ -197,7 +197,7 @@ class PermissionMatcherTest extends \Codeception\TestCase\Test
         $this->assertArrayMatches(['read'], $this->matcher->match($permissions, ['foo']));
     }
     
-    public function testMatchReverse()
+    public function testMatchFull()
     {
         $permissions = [
             'admin' => 'read',
@@ -211,28 +211,28 @@ class PermissionMatcherTest extends \Codeception\TestCase\Test
 
         $this->assertEquals([
             'read' => ['admin']
-        ], $this->matcher->match($permissions, ['admin'], true));
+        ], $this->matcher->matchFull($permissions, ['admin']));
         
         $this->assertEquals([
             'write' => ['admin.support', 'admin.*'],
             'develop' => ['admin.dev', 'admin.*'],
             'test' => ['admin.dev.tester', 'admin.*']
-        ], $this->matcher->match($permissions, ['admin.*'], true));
+        ], $this->matcher->matchFull($permissions, ['admin.*']));
         
         $this->assertEquals([
             'test' => ['admin.dev.tester', 'admin.*.*']
-        ], $this->matcher->match($permissions, ['admin.*.*'], true));
+        ], $this->matcher->matchFull($permissions, ['admin.*.*']));
         
         $this->assertEquals([
             'read' => ['admin'],
             'write' => ['admin.support', 'admin.*'],
             'develop' => ['admin.dev', 'admin.*'],
             'test' => ['admin.dev.tester', 'admin.*']
-        ], $this->matcher->match($permissions, ['admin', 'admin.*'], true));
+        ], $this->matcher->matchFull($permissions, ['admin', 'admin.*']));
         
         $this->assertEquals([
             'develop' => ['admin.dev', 'admin.d*'],
             'test' => ['admin.dev.tester', 'admin.d*']
-        ], $this->matcher->match($permissions, ['admin.d*'], true));
+        ], $this->matcher->matchFull($permissions, ['admin.d*']));
     }
 }
