@@ -67,11 +67,27 @@ class PermissionMatcher
      */
     protected function getMatchingAuthzGroup($permissionAuthzGroup, array $authzGroups)
     {
+        $invert = $this->stringStartsWith($permissionAuthzGroup, '!');
+        
+        if ($invert) {
+            $permissionAuthzGroup = substr($permissionAuthzGroup, 1);
+        }
+        
+        $matches = [];
+        
         foreach ($authzGroups as $authzGroup) {
-            if ($this->authzGroupsAreEqual($permissionAuthzGroup, $authzGroup)) {
-                return $authzGroup;
+            $match = $this->authzGroupsAreEqual($permissionAuthzGroup, $authzGroup);
+            
+            if ($match && $invert) {
+                return null;
+            }
+            
+            if ($match && !$invert || !$match && $invert) {
+                $matches[] = $authzGroup;
             }
         }
+        
+        return !empty($matches) ? $matches[0] : null;
     }
 
 
@@ -116,10 +132,9 @@ class PermissionMatcher
         $regex = '^' . str_replace('[^/]+', '\\*', preg_quote($pattern, '~')) . '$';
         $regex = str_replace('\\*', '(.*)', $regex);
 
-        $invert = $this->stringStartsWith($pattern, '!');
         $match = preg_match('~' . $regex . '~i', $subject);
 
-        return $invert ? !$match : $match;
+        return $match;
     }
 
 
